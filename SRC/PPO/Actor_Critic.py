@@ -1,4 +1,4 @@
-from SF_TRON_F.SRC.PPO.Buffer import *
+from SF_TRON_FN.SRC.PPO.Buffer import *
 
 """ PPO算法的Actor-Critic网络结构
 Actor: 输入状态 输出动作的均值和标准差"""

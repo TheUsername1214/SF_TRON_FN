@@ -8,8 +8,6 @@ from isaaclab.actuators import ImplicitActuatorCfg
 from isaaclab.scene import InteractiveScene, InteractiveSceneCfg
 from isaaclab.sensors import CameraCfg, ContactSensorCfg, RayCasterCfg, ImuCfg, patterns, RayCasterCameraCfg
 from isaaclab.utils import configclass
-from isaaclab.terrains import TerrainImporter, TerrainImporterCfg, TerrainGeneratorCfg
-from isaaclab.terrains.height_field.hf_terrains_cfg import HfSteppingStonesTerrainCfg, HfRandomUniformTerrainCfg
 from isaaclab.sim import DomeLightCfg
 from isaaclab.utils.assets import ISAAC_NUCLEUS_DIR
 
@@ -62,43 +60,6 @@ def _create_simulation_context(dt: float, sub_step: int, device: str) -> sim_uti
     return sim_utils.SimulationContext(sim_cfg)
 
 
-def _build_terrain_generator_config(num_rows: int = 5) -> TerrainGeneratorCfg:
-    """
-    构建地形生成器配置，包含多个垫脚石地形，用于训练。
-
-    Args:
-        num_rows: 地形网格的行数（和列数）。
-
-    Returns:
-        地形生成器配置对象。
-    """
-    terrain_number = 3
-    sub_terrains = {}
-
-    # 生成多个不同深度的垫脚石地形
-    depths = 0*np.linspace(-0.15, -0.2, terrain_number)
-    for i, depth in enumerate(depths):
-        sub_terrains[f"stepping_stone{i}"] = HfSteppingStonesTerrainCfg(
-            proportion=1.0,
-            border_width=0.1,
-            holes_depth=float(depth),          # 负值表示下陷深度
-            stone_height_max=0.0,
-            stone_width_range=(0.5, 0.8),
-            stone_distance_range=(0.05, 0.2),
-            platform_width=0.7,
-        )
-
-    return TerrainGeneratorCfg(
-        num_rows=num_rows,
-        num_cols=num_rows,
-        size=(10.0, 4.0),                      # 每个子地形的尺寸 (m)
-        color_scheme="none",
-        sub_terrains=sub_terrains,
-        curriculum=False,
-        border_width=10.0,
-        horizontal_scale=0.05,                  # 高分辨率网格
-    )
-
 
 @configclass
 class _RobotSceneCfg(InteractiveSceneCfg):
@@ -107,26 +68,17 @@ class _RobotSceneCfg(InteractiveSceneCfg):
     包含光照、地形、机器人本体以及各种传感器。
     """
     # 光照
-    # light = AssetBaseCfg(
-    #     prim_path="/World/skyLight",
-    #     spawn=DomeLightCfg(
-    #         intensity=750.0,
-    #         color=(0.9, 0.9, 0.9),
-    #         texture_file=f"{ISAAC_NUCLEUS_DIR}/Materials/Textures/Skies/PolyHaven/kloofendal_43d_clear_puresky_4k.hdr",
-    #     ),
-    # )
-
-    # 地形导入器（使用生成器）
-    terrain = TerrainImporterCfg(
-        prim_path="/World/defaultGroundPlane",
-        terrain_type="generator",
-        terrain_generator=_build_terrain_generator_config(),
-        debug_vis=False,
-        physics_material=sim_utils.RigidBodyMaterialCfg(
-            static_friction=1.0,
-            dynamic_friction=1.0,
+    light = AssetBaseCfg(
+        prim_path="/World/skyLight",
+        spawn=DomeLightCfg(
+            intensity=750.0,
+            color=(0.9, 0.9, 0.9),
+            texture_file=f"{ISAAC_NUCLEUS_DIR}/Materials/Textures/Skies/PolyHaven/kloofendal_43d_clear_puresky_4k.hdr",
         ),
     )
+
+    # 地形导入器（使用生成器）
+    terrain = AssetBaseCfg(prim_path="/World/defaultGroundPlane", spawn=sim_utils.GroundPlaneCfg())
 
     # 机器人本体
     robot = ArticulationCfg(
@@ -179,23 +131,6 @@ class _RobotSceneCfg(InteractiveSceneCfg):
     R_imu_sensor = ImuCfg(
         prim_path="{ENV_REGEX_NS}/Robot/ankle_R_Link",
         update_period=0.0,
-    )
-
-    # 深度相机（射线投射式，非渲染式）
-    Depth_Camera = RayCasterCameraCfg(
-        prim_path="{ENV_REGEX_NS}/Robot/Camera_Frame",
-        update_period=0.0,
-        mesh_prim_paths=["/World/defaultGroundPlane"],
-        max_distance=6.0,
-        depth_clipping_behavior="max",
-        debug_vis=False,
-        offset=RayCasterCameraCfg.OffsetCfg(convention="world"),
-        pattern_cfg=patterns.PinholeCameraPatternCfg(
-            width=int(11 * (45.55 / 26.6)),
-            height=11,
-            horizontal_aperture=45.55,
-            vertical_aperture=26.6,
-        ),
     )
 
 

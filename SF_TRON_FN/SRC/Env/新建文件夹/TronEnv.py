@@ -1,4 +1,4 @@
-from SF_TRON_F.SRC.Env.BaseEnv import *
+from SF_TRON_FN.SRC.Env.BaseEnv import *
 class TronEnv(BaseEnv):
     def __init__(self, EnvCfg, RobotCfg, PPOCfg):
         super().__init__(EnvCfg, RobotCfg, PPOCfg)

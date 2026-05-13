@@ -1,4 +1,4 @@
-from SF_TRON_F.SRC.Env.BaseEnv import *
+from SF_TRON_FN.SRC.Env.BaseEnv import *
 class TronEnv(BaseEnv):
     def __init__(self, EnvCfg, RobotCfg, PPOCfg):
         super().__init__(EnvCfg, RobotCfg, PPOCfg)
@@ -31,7 +31,7 @@ class TronEnv(BaseEnv):
         self.sine_clock = torch.sin(clock_signal)
         self.cosine_clock = torch.cos(clock_signal)
 
-        current_map = self.scene["Depth_Camera"].data.output['distance_to_image_plane'].reshape(self.agents_num, -1)
+
         # 拼接出下一时刻状态空间张量，并归一化
         # 添加噪声后的状态
         current_state = torch.concatenate(
@@ -43,7 +43,6 @@ class TronEnv(BaseEnv):
              self.cosine_clock,
              self.action,
              self.vel_cmd,
-             0.25 * (current_map.clip(0, 6))
              ), dim=1)
 
         # #——————————————————————获取当前时刻状态结束————————————————————————————————##
@@ -84,14 +83,10 @@ class TronEnv(BaseEnv):
         # 获取时间和时钟信号
         self.time += self.dt
         period = 1
-        offset = 0.5
         self.phase = self.time % period / period
         clock_signal = 2 * torch.pi * self.phase
         self.sine_clock = torch.sin(clock_signal)
         self.cosine_clock = torch.cos(clock_signal)
-
-        next_map = self.scene["Depth_Camera"].data.output['distance_to_image_plane'].reshape(self.agents_num, -1)
-        # 生成噪声
 
         # 拼接出下一时刻状态空间张量，并归一化
         next_state = torch.concatenate((self.next_joint_pos,
@@ -101,8 +96,7 @@ class TronEnv(BaseEnv):
                                         self.sine_clock,
                                         self.cosine_clock,
                                         self.action,
-                                        self.vel_cmd,
-                                        0.25 * (next_map.clip(0, 6))), dim=1)
+                                        self.vel_cmd), dim=1)
 
         # #——————————————————————获取下一时刻状态结束————————————————————————————————##
 

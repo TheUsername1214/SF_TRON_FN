@@ -5,9 +5,9 @@ import os
 current_dir = os.path.dirname(os.path.abspath(__file__))
 project_root = os.path.dirname(current_dir)  # 假设脚本在项目子目录中
 sys.path.insert(0, project_root)
-from SF_TRON_F.SRC.Env.TronEnv import TronEnv
-from SF_TRON_F.SRC.PPO.Actor_Critic import Actor_Critic
-from SF_TRON_F.SRC.Config.Config import *
+from SF_TRON_FN.SRC.Env.TronEnv import TronEnv
+from SF_TRON_FN.SRC.PPO.Actor_Critic import Actor_Critic
+from SF_TRON_FN.SRC.Config.Config import *
 
 maximum_step = PPOCfg.PPOParam.maximum_step
 episode = PPOCfg.PPOParam.episode

@@ -75,8 +75,8 @@ class PPOCfg:
 
     class ActorParam:  # Actor 神经网络 参数
         """通用："""
-        action_scale = [0.6,0.6, 0.6, 0.6, 0.6, 0.6, 0.6, 0.6]
-        std_scale = 0.6
+        action_scale = [0.5,0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5]
+        std_scale = 0.4
         act_layers_num = 256
         actuator_num = RobotCfg.ActuatorParam.actuator_num
         actor_lr = 1e-4

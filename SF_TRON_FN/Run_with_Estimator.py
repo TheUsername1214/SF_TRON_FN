@@ -9,11 +9,11 @@ a = object()
 current_dir = os.path.dirname(os.path.abspath(__file__))
 project_root = os.path.dirname(current_dir)  # 假设脚本在项目子目录中
 sys.path.insert(0, project_root)
-from SF_TRON_F.SRC.Env.TronEnv import TronEnv
-from SF_TRON_F.SRC.PPO.Actor_Critic import Actor_Critic
-from SF_TRON_F.SRC.Config.TS_Config import *
-from SF_TRON_F.SRC.Estimator.Estimator import *
-from SF_TRON_F.SRC.Plotter.ImagePlotter import *
+from SF_TRON_FN.SRC.Env.TronEnv import TronEnv
+from SF_TRON_FN.SRC.PPO.Actor_Critic import Actor_Critic
+from SF_TRON_FN.SRC.Config.TS_Config import *
+from SF_TRON_FN.SRC.Estimator.Estimator import *
+from SF_TRON_FN.SRC.Plotter.ImagePlotter import *
 
 Img = ImagePlotter(image_number=2)
 maximum_step = PPOCfg.PPOParam.maximum_step
