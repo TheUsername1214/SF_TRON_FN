@@ -3,6 +3,7 @@
 Task Dependent：即根据不同的任务需要加入的参数
 """
 
+
 class EnvCfg:
     class EnvParam:
         """通用"""
@@ -10,7 +11,7 @@ class EnvCfg:
         agents_num_in_play = 10
         dt = 0.02
         sub_step = 10
-        train = False
+        train = True
         device = 'cuda'
 
         """Task Dependent"""
@@ -18,6 +19,7 @@ class EnvCfg:
         friction_coef = 1
         backend = "torch"
         headless = train  # True: no GUI, False: GUI
+
 
 class RobotCfg:
     class ActuatorParam:
@@ -32,7 +34,6 @@ class RobotCfg:
                             0, 0,
                             0, 0]
 
-
     class InitialState:
         """Task Dependent的"""
         initial_height = 0.85
@@ -40,7 +41,7 @@ class RobotCfg:
         initial_body_linear_vel_range = 0.1
         initial_body_angular_vel_range = 0.1
         initial_joint_pos_range = 0.1
-        initial_joint_vel_range = 0
+        initial_joint_vel_range = 0.1
         initial_joint_angle = [0, 0,
                                -0, 0,
                                0, 0,
@@ -59,24 +60,23 @@ class RobotCfg:
         Kp_range = 0.1
         Kd_range = 0.1
         # u(t-delay)
-        action_delay_range = 5 # unit in sub step
+        action_delay_range = 5  # unit in sub step
         # external force
-        external_body_force_range = [30,30,5]
-
+        external_body_force_range = [30, 30, 10]
 
 
 class PPOCfg:
     class CriticParam:  # Critic 神经网络 参数
         """通用："""
-        state_dim = 33 + 18 * 11  # 机器人本体与外部指令感知
+        state_dim = 33  # 机器人本体与外部指令感知
         critic_layers_num = 256
         critic_lr = 1e-4
         critic_update_frequency = 300
 
     class ActorParam:  # Actor 神经网络 参数
         """通用："""
-        action_scale = [0.5,0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5]
-        std_scale = 0.4
+        action_scale = [0.7, 0.7, 0.7, 0.7, 0.7, 0.7, 0.5, 0.5]
+        std_scale = 0.5
         act_layers_num = 256
         actuator_num = RobotCfg.ActuatorParam.actuator_num
         actor_lr = 1e-4
@@ -87,10 +87,10 @@ class PPOCfg:
         gamma = 0.99
         lam = 0.95
         epsilon = 0.2
-        policy_smooth = 0.1
+        policy_smooth = 0.3
         maximum_step = 25
         episode = 3000
-        entropy_coef = 0  # positive means std increase, else decrease
+        entropy_coef = -0.01  # positive means std increase, else decrease
         batch_size = 20000
 
     class EstimatorParam:
@@ -100,4 +100,4 @@ class PPOCfg:
         output_dim = 8
         estimator_layers_num = 128
         estimator_lr = 1e-3
-        estimator_update_frequency = 300
+        estimator_update_frequency = 200

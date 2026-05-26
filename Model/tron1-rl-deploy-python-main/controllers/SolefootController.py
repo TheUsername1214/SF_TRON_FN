@@ -9,8 +9,6 @@ import limxsdk.robot.Rate as Rate
 import limxsdk.robot.Robot as Robot
 import limxsdk.robot.RobotType as RobotType
 import limxsdk.datatypes as datatypes
-import rospy
-from sensor_msgs.msg import Image  # ROS图像消息类型
 
 
 class SolefootController:
@@ -88,9 +86,6 @@ class SolefootController:
         self.robot_diagnostic_callback_partial = partial(self.robot_diagnostic_callback)
         self.robot.subscribeDiagnosticValue(self.robot_diagnostic_callback_partial)
 
-        # set up stupid camera
-        rospy.init_node('solefoot_controller', anonymous=True)
-
         # Initialize the calibration state to -1, indicating no calibration has occurred.
         self.calibration_state = -1
 
@@ -150,6 +145,7 @@ class SolefootController:
         self.actions_size = config['PointfootCfg']['size']['actions_size']
         self.action_scale = np.array([0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5])
 
+
         self.observations_size = config['PointfootCfg']['size']['observations_size']
 
         self.imu_orientation_offset = np.array(list(config['PointfootCfg']['imu_orientation_offset'].values()))
@@ -158,9 +154,8 @@ class SolefootController:
 
         # Initialize variables for actions, observations, and commands
         self.actions = np.zeros(self.actions_size)
-        self.actions1 = np.zeros(self.actions_size)
-        self.actions2 = np.zeros(self.actions_size)
         self.observations = np.zeros(self.observations_size)
+        self.historical_observations = np.zeros(self.observations_size * 10)
 
         self.loop_count = 0  # loop iteration count
         self.stand_percent = 0  # percentage of time the robot has spent in stand mode
@@ -271,7 +266,6 @@ class SolefootController:
         for i in range(len(joint_pos)):
             pos_des = self.actions[i]
             if (i + 1) % 4 != 0:
-
                 self.set_joint_command(i, pos_des, 0, 0, self.control_cfg['stiffness'], self.control_cfg['damping'])
             else:
                 self.set_joint_command(i, pos_des, 0, 0, self.ankle_joint_stiffness, self.ankle_joint_damping)
@@ -321,25 +315,21 @@ class SolefootController:
         phase = self.sim_time % 1 / 1
         sine_clock = np.sin(2 * np.pi * phase).reshape(1)
         cosine_clock = np.cos(2 * np.pi * phase).reshape(1)
-        # sine_clock = np.sin(time.time()).reshape(1)
-        # cosine_clock = np.cos(time.time()).reshape(1)
-        if len(self.depth_image) > 400:
-            self.depth_image = np.clip(self.downsample_depth_image(self.depth_image).flatten(), 0, 6)
 
-        self.depth_image = self.depth_image.flatten()
         obs = np.concatenate([
             joint_pos_input,  # Scaled joint positions
             joint_velocities * 0.05,  # Scaled joint velocities
             euler_angles * 0.25,  # Scaled base orientation (Euler angles)
             base_ang_vel * 0.25,  # Scaled base angular velocity
-            sine_clock,
-            cosine_clock,
-            last_actions,  # Lab order
-            self.cmd,
-            self.depth_image * 0.25
+            sine_clock * 0.5,
+            cosine_clock * 0.5,
+            last_actions * 0.5,  # Lab order
+            self.cmd * 1
         ])
 
         self.observations = obs.copy()
+        self.historical_observations[self.observations_size:] = self.historical_observations[:-self.observations_size]
+        self.historical_observations[:self.observations_size] = self.observations.copy()
 
     def get_euler_angle(self, quat):  # I have checked it, it is correct
         """Convert quaternion to Euler angles (roll, pitch, yaw) in radians.
@@ -392,31 +382,23 @@ class SolefootController:
         """
         Computes the actions based on the current observations using the policy session.
         """
-        # Concatenate observations into a single tensor and convert to float32
-        input_tensor1 = self.observations.reshape(1, -1).copy()
-        input_tensor1[0, 33:] = 0
-        input_tensor1 = input_tensor1.astype(np.float32)
 
-        # Create a dictionary of inputs for the policy session
-        inputs1 = {self.policy_input_names1[0]: input_tensor1}
 
-        # Run the policy session and get the output
-        output1, _ = self.policy_session1.run(self.policy_output_names1, inputs1)
 
-        input_tensor2 = self.observations.reshape(1, -1).copy()
+        input_tensor2 = self.historical_observations.reshape(1, -1).copy()
         input_tensor2 = input_tensor2.astype(np.float32)
-
-        # Create a dictionary of inputs for the policy session
         inputs2 = {self.policy_input_names2[0]: input_tensor2}
-
-        # Run the policy session and get the output
         output2, _ = self.policy_session2.run(self.policy_output_names2, inputs2)
 
-        # Flatten the output and store it as actions
-        self.actions1 = np.array(output1).flatten()  # Lab order
-        self.actions2 = np.array(output2).flatten()  # Lab order
+        # Concatenate observations into a single tensor and convert to float32
+        input_tensor1 = np.concatenate((self.observations.reshape(1, -1), np.array(output2).reshape(1, -1)), axis=1)
+        input_tensor1 = input_tensor1.astype(np.float32)
+        inputs1 = {self.policy_input_names1[0]: input_tensor1}
+        output1, _ = self.policy_session1.run(self.policy_output_names1, inputs1)
 
-        self.actions = self.actions1.copy() + self.actions2
+        # Flatten the output and store it as actions
+        self.actions1 = np.array(output1).flatten()
+        self.actions = self.actions1.copy()
         self.actions = self.actions * self.action_scale
         self.actions += self.default_PD_angle
 

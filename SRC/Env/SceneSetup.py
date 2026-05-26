@@ -146,7 +146,7 @@ def _build_scene_config(file_path: str, agents_num: int) -> _RobotSceneCfg:
         配置好的场景配置对象。
     """
     # 创建配置实例
-    cfg = _RobotSceneCfg(num_envs=agents_num, env_spacing=0.0)
+    cfg = _RobotSceneCfg(num_envs=agents_num, env_spacing=1)
 
     # 动态设置机器人的 USD 路径（避免在类定义中固定）
     cfg.robot.spawn.usd_path = file_path

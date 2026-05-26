@@ -17,11 +17,10 @@ class EstimatorNetwork(torch.nn.Module):
         """处理输入，提取状态和地图特征"""
         x = input_
         # 通过主干网络
-        x = torch.nn.functional.elu(self.fc1_x(x))
-        x = torch.nn.functional.elu(self.fc2_x(x))
-        x = torch.nn.functional.elu(self.fc3_x(x))
-        x = torch.nn.functional.elu(self.fc4_x(x))
-
+        x = torch.nn.functional.tanh(self.fc1_x(x))
+        x = torch.nn.functional.tanh(self.fc2_x(x))
+        x = torch.nn.functional.tanh(self.fc3_x(x))
+        x = torch.nn.functional.tanh(self.fc4_x(x))
         return x
 
 
@@ -78,7 +77,6 @@ class Estimator:
     def update(self):
         state = self.state_buffer.view(-1, self.state_dim * self.history_length)
         output = self.output_buffer.view(-1, self.output_dim)
-
         # Estimator更新
         for i in range(self.estimator_update_frequency):
             idx = self.idx[i]
