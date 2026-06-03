@@ -48,6 +48,8 @@ class BaseEnv:
         self.Kd = self.Kd * (1 + Kd_range * rand_num_like(self.Kd))
         self.action_delay_range = self.DomainRandomizationCfg.action_delay_range
         self.external_body_force_range = self.DomainRandomizationCfg.external_body_force_range
+        self.moving_prob =  self.DomainRandomizationCfg.moving_prob
+        self.applying_force_prob = self.DomainRandomizationCfg.applying_force_prob
 
         """Task Dependent：初始化机器人出生状态的范围"""
         self.initial_body_linear_vel_range = RobotCfg.InitialState.initial_body_linear_vel_range
@@ -165,14 +167,14 @@ class BaseEnv:
         """
 
         self.vel_cmd = torch.rand((self.agents_num, 1), device=self.device)
-        self.vel_cmd = (self.vel_cmd > 0.4).float()  # 60%概率前进，40%概率原地不动
+        self.vel_cmd = (self.vel_cmd > self.moving_prob).float()  # 60%概率前进，40%概率原地不动
 
     def apply_disturbance(self):
         """
         Task Dependent: 用于模拟外力扰动，给20%的机器人加一个随机的外力
         :return:
         """
-        is_apply = torch.rand((self.agents_num, 1), device=self.device) > 0.5  # 给50%的人加外力
+        is_apply = torch.rand((self.agents_num, 1), device=self.device) > self.applying_force_prob  # 给50%的人加外力
         self.external_body_force = rand_num((self.agents_num, 3), self.device) * is_apply.float()
         self.external_body_torques = rand_num((self.agents_num, 3), self.device) * is_apply.float()
 
@@ -188,6 +190,10 @@ class BaseEnv:
                                                           external_body_torques,
                                                           body_ids=[0],
                                                           is_global=True)
+    def apply_change(self, num: int, den: int):
+        if (num % den == 0) :
+            self.resample_command()
+            self.apply_disturbance()
 
     def append_action_history(self, action: torch.Tensor):
         """

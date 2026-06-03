@@ -19,8 +19,7 @@ class ImagePlotter:
             plt.plot(self.x[i], self.y[i],label = f"index{i}")
         plt.legend()
         plt.show(block=False)
-        plt.pause(0.05)
-
+        plt.pause(0.001)
         plt.clf()
 
     def static_plot(self, index=0):

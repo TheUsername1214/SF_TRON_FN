@@ -23,9 +23,7 @@ if not EnvCfg.EnvParam.train:
 for epi in range(PPOCfg.PPOParam.episode):
     print(f"===================episode: {epi}===================")
     """每一段时间改个命令和加干扰"""
-    if epi % int(3 / (EnvCfg.EnvParam.dt * PPOCfg.PPOParam.maximum_step) + 1) == 0:
-        Env.resample_command()
-        Env.apply_disturbance()
+    Env.apply_change(epi, 4)
     state = Env.get_current_observations()
     Estimator_1.store_forward_state(state)
     for step in range(PPOCfg.PPOParam.maximum_step):
@@ -40,9 +38,9 @@ for epi in range(PPOCfg.PPOParam.episode):
             privilege_state = Env.get_privilege()
             est = Estimator_1.get_estimate_output()
 
-            Img.append(epi * PPOCfg.PPOParam.maximum_step + step, 100 * est[:, 7:8][0, 0].item(), 0)
-            Img.append(epi * PPOCfg.PPOParam.maximum_step + step, 100 * privilege_state[:, 7:8][0, 0].item(), 1)
-            # Img.animation_plot()
+            Img.append(epi * PPOCfg.PPOParam.maximum_step + step, 100 * est[:, 0:1][0, 0].item(), 0)
+            Img.append(epi * PPOCfg.PPOParam.maximum_step + step, 100 * privilege_state[:, 0:1][0, 0].item(), 1)
+            Img.animation_plot()
 
         """做动作"""
         action, scaled_action = PPO_1.sample_action(full_state, deterministic=not EnvCfg.EnvParam.train)

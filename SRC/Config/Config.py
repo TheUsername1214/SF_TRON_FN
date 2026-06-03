@@ -7,11 +7,11 @@ Task Dependent：即根据不同的任务需要加入的参数
 class EnvCfg:
     class EnvParam:
         """通用"""
-        agents_num = 4000
+        agents_num = 2000
         agents_num_in_play = 10
         dt = 0.02
         sub_step = 10
-        train = True
+        train = False
         device = 'cuda'
 
         """Task Dependent"""
@@ -62,7 +62,10 @@ class RobotCfg:
         # u(t-delay)
         action_delay_range = 5  # unit in sub step
         # external force
-        external_body_force_range = [30, 30, 10]
+        external_body_force_range = [50, 50, 10]
+        moving_prob = 0.5
+        applying_force_prob = 0.5
+
 
 
 class PPOCfg:
@@ -75,7 +78,7 @@ class PPOCfg:
 
     class ActorParam:  # Actor 神经网络 参数
         """通用："""
-        action_scale = [0.7, 0.7, 0.7, 0.7, 0.7, 0.7, 0.5, 0.5]
+        action_scale = [1, 1, 1, 1, 1, 1, 1, 1]
         std_scale = 0.5
         act_layers_num = 256
         actuator_num = RobotCfg.ActuatorParam.actuator_num
