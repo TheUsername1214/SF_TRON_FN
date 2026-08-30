@@ -1,6 +1,4 @@
 <div align="center">
-
-<<<<<<< HEAD
 # SF_TRON_FN 🤖
 
 **Teach a bipedal robot to walk — 2,000 of them at once.**
